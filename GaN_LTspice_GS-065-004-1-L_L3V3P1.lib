@@ -1,0 +1,115 @@
+* Created in LTspice Version XVII                               *
+*                                            					*
+* GaN Systems Inc. Power Transistors                            *
+* LTSpice Library for GaN Transistors                           *
+* Version 3.1                                         			*
+*                                                               *
+*****************************************************************
+*****************************************************************
+*                                                               *
+* Models provided by GaN Systems Inc. are not warranted by      *
+* GaN Systems Inc. as fully representing all of the 			*
+* specifications and operating characteristics of the 			*
+* semiconductor product to which the model relates. The model 	*
+* describes the characteristics of a typical device.			*
+* In all cases, the current data sheet information for a given  *
+* device is the final design guideline and the only actual      *
+* performance specification.                                    *
+* Although models can be a useful tool in evaluating the devices*
+* performance, they cannot model exact device performance under *
+* all conditions, nor are they intended to replace bread-       *
+* boarding for final verification. GaN Systems Inc. therefore   *
+* does not assume any liability arising from their use.         *
+* GaN Systems Inc. reserves the right to change models without  *
+* prior notice.                                                 *
+*                                                               *
+* This library contains models of the following GaN Systems     *
+* Inc. transistors:                                             *
+*                                                               *
+* GS-065-004-1-L                                              	*
+*****************************************************************
+*Level 3. In addition to Level 2, this level includes the stray inductance in the package.
+*
+*
+.subckt GaN_LTspice_GS-065-004-1-L_L3V3P1 gatein drainin sourcein source_S TC TJ
+*
+*
+.param 	sf = 0.3668
+.param rTC=-0.004	gan_res={125.56e-3}	metal_res={ (6.3e-3/sf) + (4.8e-3/sf) }	gtc=2.893	sh_s = 0.05263	sh_d = 0.94376
+.param  cur=0.0322	x0_0=1.1	x0_1=0.3 	x0_2=1.0 	thr = 1.7 	itc=0.147	atc=30.83459808
+*
+*
+Rth_1 T11 TJ	{0.2}
+Rth_2 T22 T11	{2.4}
+Rth_3 T33 T22	{1.3}
+Rth_4 TC T33	{0.1}
+*
+*
+Cth_1 0 TJ 		{1.1e-5}
+Cth_2 0 T11 	{8.0e-5}
+Cth_3 0 T22 	{8.0e-4}
+Cth_4 0 T33 	{1.0e-3}
+*
+*
+bdtemp 0 TJ I = (if(v(drain,source)>0,
++   (cur*(-(v(TJ)-25)*itc+atc)*log(1.0+exp(26*(v(gate,source)-thr)))*
++	v(drain,source)/(1 + max(x0_0+x0_1*(v(gate,source)+x0_2),0.2)*v(drain,source)))*
++	v(drainin,sourcein),
++   (cur*(-(v(TJ)-25)*itc+atc)*log(1.0+exp(26*(v(gate,drain)-thr)))*
++	v(source, drain)/(1 + max(x0_0+x0_1*(v(gate,drain)+x0_2),0.2)*v(source,drain)))*
++	v(sourcein, drainin))) * sf
+*
+*
+VSENSE_d 3_d drain DC 0
+ERES_d drain3 3_d value={I(VSENSE_d) * sh_d * (metal_res*(1-1*rTc*(V(TJ)-25)) + gan_res*PWR((v(TJ)+273)/298,gtc)) / sf}
+ld drainin drain3 {375e-12} Rser=0
+*
+*
+VSENSE_s 3_s source DC 0
+ERES_s source3 3_s value={I(VSENSE_s) * sh_s * (metal_res*(1-1*rTc*(V(TJ)-25)) + gan_res*PWR((v(TJ)+273)/298,gtc)) / sf }
+Ls source3 sourcein {413e-12}  Rser=0
+*
+*
+LSS source_S source_S1 {1.34255e-9} Rser=0
+RSS source_S1 source3 {0.035}
+Lg gatein gate1 {2.68516e-9} Rser=0
+rg gate1 gate {1.4+0.065}
+*
+*
+Rcsdconv drain source {4000Meg}
+Rcgsconv gate source {4000Meg}
+Rcgdconv gate drain {4000Meg}
+*
+*
+bswitch drain2 source2 I = (if(v(drain2,source2)>0,
++   (cur*(-(v(TJ)-25)*itc+atc)*log(1.0+exp(26*(v(gate,source2)-thr)))*
++	v(drain2,source2)/(1 + max(x0_0+x0_1*(v(gate,source2)+x0_2),0.2)*v(drain2,source2))),
+
++   (-cur*(-(v(TJ)-25)*itc+atc)*log(1.0+exp(26*(v(gate,drain2)-thr)))*
++	v(source2, drain2)/(1 + max(x0_0+x0_1*(v(gate,drain2)+x0_2),0.2)*v(source2,drain2))))) * sf
+*
+*
+R_drain2 drain2 drain {(1e-4)}
+R_source2 source2 source {(1e-4)}
+*
+*
+C_GS	gate source  	{6.8e-11 * sf} 
+C_GS1	gate source		Q = (	-2.65e-11*(1-1./(1+exp(0.07*(-v(drain, source)+20))))
++								-0.37e-10*(-0.682+0.66/(1+exp(0.11*(-v(drain, source)+.01))))) * x * sf
+*
+*
+C_GS2	gate source		Q = 3.15e-011*log(1+exp(8*(x-0.9))) * sf
+*
+*
+C_GD	gate drain		{0.3e-012 * sf}
+C_GD1	gate drain		Q = 375e-12*log(1+exp(0.07*(x+20))) * sf
+*
+*
+C_SD	source drain	{2e-011 * sf}
+C_SD1	source drain	Q =  0.85e-9*log(1+exp(0.085*(x+63))) * sf 
++							+1.45e-9*log(1+exp(0.025*(x+180)))  * sf
++							-2.65e-11*(1-1./(1+exp(0.07*(x+20))) * sf)
+*
+*
+.ends
+*$
